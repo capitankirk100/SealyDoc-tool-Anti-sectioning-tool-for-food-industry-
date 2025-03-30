@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SealyDoc Label Editor</title>
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --primary-hover: #45a049;
+            --background: #f5f5f5;
+            --foreground: #333;
+            --card-background: #ffffff;
+            --border-color: #e0e0e0;
+            --muted: #6c757d;
+            --priority-high: #dc3545;
+            --priority-medium: #fd7e14;
+            --priority-low: #28a745;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background);
+            color: var(--foreground);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upgrade-banner {
+            display: none;
+            background-color: #cce5ff;
+            border: 1px solid #b8daff;
+            color: #004085;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .upgrade-banner button {
+            background-color: #004085;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+            background-color: var(--card-background);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .search-container {
+            flex-grow: 1;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 20px 12px 40px;
+            font-size: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            background-color: var(--card-background);
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            font-size: 20px;
+        }
+
+        .priority-dropdown {
+            position: relative;
+        }
+
+        .priority-button {
+            padding: 10px 20px;
+            background-color: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .priority-button:hover {
+            background-color: var(--background);
+        }
+
+        .priority-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 10;
+            min-width: 150px;
+        }
+
+        .priority-menu.show {
+            display: block;
+        }
+
+        .priority-menu button {
+            display: block;
+            width: 100%;
+            padding: 10px 20px;
+            text-align: left;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .priority-menu button:hover {
+            background-color: var(--background);
+        }
+
+        .counter {
+            padding: 10px 20px;
+            background-color: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .counter:hover {
+            background-color: var(--background);
+        }
+
+        .label-card {
+            background-color: var(--card-background);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .label-card:hover {
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .label-header {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border-left: 4px solid var(--primary);
+            transition: background-color 0.3s ease;
+        }
+
+        .label-header:hover {
+            background-color: rgba(76, 175, 80, 0.05);
+        }
+
+        .label-header h3 {
+            margin: 0;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .label-content {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease;
+        }
+
+        .label-content.expanded {
+            max-height: 1000px;
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .label-actions {
+            display: flex;
+            gap: 10px;
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .action-button {
+            background: none;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted);
+            font-size: 20px;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .action-button:hover {
+            background-color: var(--background);
+            color: var(--foreground);
+        }
+
+        .action-button.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+            overflow: auto;
+        }
+
+        .modal-content {
+            background-color: var(--card-background);
+            margin: 5% auto;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+            width: 90%;
+            max-width: 600px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+
+        .print-preview {
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .print-preview:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .print-preview h3 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .print-preview p {
+            margin: 10px 0;
+        }
+
+        .print-preview strong {
+            color: var(--foreground);
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s, opacity 0.3s, transform 0.1s;
+        }
+
+        .button:active {
+            transform: translateY(1px);
+        }
+
+        .button-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .button-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .button-secondary {
+            background-color: var(--muted);
+            color: white;
+        }
+
+        .button-secondary:hover {
+            opacity: 0.8;
+        }
+
+        .button-secondary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .button-secondary.active {
+            background-color: var(--primary);
+        }
+
+        .preview-slider {
+            width: 100%;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 20px 0;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) var(--background);
+        }
+
+        .preview-slider::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .preview-slider::-webkit-scrollbar-track {
+            background: var(--background);
+        }
+
+        .preview-slider::-webkit-scrollbar-thumb {
+            background-color: var(--primary);
+            border-radius: 20px;
+        }
+
+        .preview-slide {
+            display: inline-block;
+            width: 300px;
+            margin-right: 20px;
+            vertical-align: top;
+            position: relative;
+        }
+
+        .preview-date {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 5px;
+        }
+
+        .preview-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .preview-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .preview-action {
+            background-color: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .preview-action:hover {
+            background-color: rgba(255, 255, 255, 1);
+        }
+
+        .preview-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-background);
+            color: var(--muted);
+            transition: all 0.3s ease;
+        }
+
+        .tab:first-child {
+            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+        }
+
+        .tab:last-child {
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+
+        .tab.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .mockup-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .mockup-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .mockup-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .mockup-item .caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .search-bar {
+                flex-direction: column;
+            }
+
+            .label-actions {
+                flex-wrap: wrap;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .button-container {
+                flex-direction: column;
+            }
+
+            .button {
+                width: 100%;
+            }
+
+            .mockup-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="warning">
+            <span class="icon">⚠️</span>
+            <span>Versione gratuita: Nessuna sincronizzazione delle date o codici QR anti-sanzione</span>
+        </div>
+
+        <div class="upgrade-banner" id="upgradeBanner">
+            <span>Hai raggiunto il limite di 20 etichette. Passa a SealyDoc Pro per etichette illimitate!</span>
+            <button onclick="window.location.href='https://sealydoc.com'">Aggiorna ora</button>
+        </div>
+
+        <h1>SealyDoc Label Editor</h1>
+
+        <div class="search-bar">
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" placeholder="Cerca etichette..." id="searchInput">
+            </div>
+            <div class="priority-dropdown">
+                <button class="priority-button" onclick="togglePriorityMenu()">🚥 Priorità</button>
+                <div class="priority-menu" id="priorityMenu">
+                    <button onclick="setPriority('all')">Tutte</button>
+                    <button onclick="setPriority('high')">Alta priorità</button>
+                    <button onclick="setPriority('medium')">Media priorità</button>
+                    <button onclick="setPriority('low')">Bassa priorità</button>
+                </div>
+            </div>
+            <div class="counter" id="labelCounter">
+                📟 0/20
+            </div>
+        </div>
+
+        <div id="labelContainer"></div>
+
+        <h2>Anteprime generate</h2>
+        <div class="preview-slider" id="previewSlider"></div>
+    </div>
+
+    <div id="printPreviewModal" class="modal">
+        <div class="modal-content">
+            <h2>Anteprima di stampa</h2>
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('label-design')">Design Etichetta</div>
+                <div class="tab" onclick="showTab('mockups')">Mockups</div>
+            </div>
+            <div id="label-design" class="tab-content active">
+                <div id="printPreviewContent"></div>
+            </div>
+            <div id="mockups" class="tab-content">
+                <div class="mockup-grid">
+                    <div class="mockup-item">
+                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Enhanced_AQADvMQxG0c-kVF9.jpg-eWr65YRW4yiseZR9AGqf4lqpolrv1e.jpeg" alt="Label Preview">
+                        <div class="caption">Label Preview</div>
+                    </div>
+                    <div class="mockup-item">
+                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Enhanced_AQADvcQxG0c-kVF9.jpg-MXL0v4gHEHZWNFvLNG3y8h0i8EmGrE.jpeg" alt="Glass Jar Preview">
+                        <div class="caption">Glass Jar Preview</div>
+                    </div>
+                    <div class="mockup-item">
+                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Enhanced_AQADv8QxG0c-kVF9.jpg-uJFuM7JnXygRJSTSkkoS6QeAPNrfBr.jpeg" alt="Package Preview">
+                        <div class="caption">Package Preview</div>
+                    </div>
+                </div>
+            </div>
+            <button class="button button-primary" onclick="downloadLabels()">Scarica etichette</button>
+            <button class="button button-secondary" onclick="closePrintPreview()">Chiudi</button>
+        </div>
+    </div>
+
+    <div id="editLabelModal" class="modal">
+        <div class="modal-content">
+            <div class="tabs">
+                <div class="tab active" onclick="showEditTab('edit')">Modifica etichetta</div>
+                <div class="tab" onclick="showEditTab('bulk')">Inserimento dati di massa</div>
+            </div>
+            <div id="edit-tab" class="tab-content active">
+                <h2>Modifica etichetta</h2>
+                <form id="editLabelForm">
+                    <div class="form-group">
+                        <label for="name">Nome</label>
+                        <input type="text" id="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ingredients">Ingredienti</label>
+                        <textarea id="ingredients" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="allergens">Allergeni</label>
+                        <textarea id="allergens" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="storagemethod">Metodo di conservazione</label>
+                        <input type="text" id="storagemethod" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expirydate">Data di scadenza</label>
+                        <input type="date" id="expirydate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="priority">Priorità</label>
+                        <select id="priority" required>
+                            <option value="low">Bassa</option>
+                            <option value="medium">Media</option>
+                            <option value="high">Alta</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="qrcodeType">Tipo di QR Code</label>
+                        <select id="qrcodeType" onchange="toggleQRCodeInput()">
+                            <option value="custom">Personalizzato</option>
+                            <option value="anti-sanction">Anti-sanzione</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="qrcodeCustomGroup">
+                        <label for="qrcode">Testo QR Code personalizzato</label>
+                        <input type="text" id="qrcode">
+                    </div>
+                    <div class="form-group">
+                        <label for="createdBy">Creato da</label>
+                        <select id="createdBy" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="imageUrl">URL immagine</label>
+                        <input type="url" id="imageUrl">
+                    </div>
+                    <button type="submit" class="button button-primary">Salva</button>
+                    <button type="button" class="button button-secondary" onclick="closeEditModal()">Annulla</button>
+                </form>
+            </div>
+            <div id="bulk-tab" class="tab-content">
+                <h2>Inserimento dati di massa</h2>
+                <p>Usa l'AI per inserire il tuo PDF o seleziona il testo dal menu del tuo sito web per ottenere questa formattazione personalizzata per l'inserimento multiplo delle scelte per la generazione delle etichette. Una volta che hai il tuo menu, è sufficiente copiarlo e incollarlo in questo box.</p>
+                <textarea id="bulkDataEntry" rows="10" placeholder="Inserisci i dati nel formato:
+nome: 🍔 Hamburger
+ingredienti: 🍔 Carne macinata (manzo, maiale), pane, lattuga, pomodoro, cetriolo, cipolla, salsa ketchup, maionese, mostarda
+allergeni: 🍔 Glutine (pane), latte (maionese)
+metodoconservazione: ❄️ +4°C
+datascadenza: 2024/11/22
+codiceqr: Hotel Palace Luxury Kitchen 11
+creatoda: Chef Sofia"></textarea>
+                <button class="button button-primary" onclick="processBulkData()">Elabora dati</button>
+                <button class="button button-secondary" onclick="closeEditModal()">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        let labels = [];
+        let selectedLabels = new Set();
+        let dataEntries = {};
+        let generatedPreviews = [];
+        let editingLabelId = null;
+
+        function renderLabels(searchTerm = '', priorityFilter = 'all') {
+            const container = document.getElementById('labelContainer');
+            container.innerHTML = '';
+
+            const filteredLabels = labels.filter(label => 
+                (label.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                label.ingredients.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                label.allergens.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                label.storagemethod.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                label.expirydate.includes(searchTerm) ||
+                label.createdBy.toLowerCase().includes(searchTerm.toLowerCase())) &&
+                (priorityFilter === 'all' || label.priority === priorityFilter)
+            );
+
+            if (filteredLabels.length === 0 && labels.length === 0) {
+                const newLabelButton = document.createElement('button');
+                newLabelButton.className = 'action-button';
+                newLabelButton.innerHTML = '➕';
+                newLabelButton.onclick = createNewLabel;
+                newLabelButton.title = 'Crea nuova etichetta';
+                container.appendChild(newLabelButton);
+            } else {
+                filteredLabels.forEach(label => {
+                    const labelElement = createLabelElement(label);
+                    container.appendChild(labelElement);
+                });
+            }
+
+            renderPreviewSlider(searchTerm);
+            updateLabelCounter();
+        }
+
+        function createLabelElement(label) {
+            const div = document.createElement('div');
+            div.className = 'label-card';
+            
+            const priorityColor = {
+                high: 'var(--priority-high)',
+                medium: 'var(--priority-medium)',
+                low: 'var(--priority-low)'
+            }[label.priority];
+
+            div.innerHTML = `
+                <div class="label-header" style="border-left-color: ${priorityColor}" onclick="toggleLabel('${label.id}')">
+                    <h3>${label.name}</h3>
+                    <span>${label.expanded ? '▼' : '▶'}</span>
+                </div>
+                <div class="label-content ${label.expanded ? 'expanded' : ''}" id="content-${label.id}">
+                    <p><strong>Ingredienti:</strong> ${label.ingredients}</p>
+                    <p><strong>Allergeni:</strong> ${label.allergens}</p>
+                    <p><strong>Metodo di conservazione:</strong> ${label.storagemethod}</p>
+                    <p><strong>Data di scadenza:</strong> ${new Date(label.expirydate).toLocaleDateString()}</p>
+                    <p><strong>Priorità:</strong> ${label.priority}</p>
+                    <p><strong>Creato da:</strong> ${label.createdBy}</p>
+                    ${label.imageUrl ? `<img src="${label.imageUrl}" alt="${label.name}" style="max-width: 100%; height: auto;">` : ''}
+                </div>
+                <div class="label-actions">
+                    <button class="action-button" onclick="editLabel('${label.id}')" title="Modifica">✏️</button>
+                    <button class="action-button" onclick="generatePreview('${label.id}')" title="Genera anteprima">👁️</button>
+                    <button class="action-button" onclick="duplicateLabel('${label.id}')" title="Duplica">📋</button>
+                    <button class="action-button" onclick="deleteLabel('${label.id}')" title="Elimina">🗑️</button>
+                </div>
+            `;
+            return div;
+        }
+
+        function toggleLabel(id) {
+            const label = labels.find(l => l.id === id);
+            if (label) {
+                label.expanded = !label.expanded;
+                renderLabels(document.getElementById('searchInput').value, getCurrentPriorityFilter());
+            }
+        }
+
+        function editLabel(id) {
+            editingLabelId = id;
+            const label = labels.find(l => l.id === id);
+            if (!label) return;
+
+            populateEditForm(label);
+
+            const modal = document.getElementById('editLabelModal');
+            modal.style.display = 'block';
+
+            showEditTab('edit');
+
+            document.getElementById('editLabelForm').onsubmit = (e) => {
+                e.preventDefault();
+                saveLabel();
+            };
+        }
+
+        function populateEditForm(label) {
+            const form = document.getElementById('editLabelForm');
+            for (const [key, value] of Object.entries(label)) {
+                const input = form.elements[key];
+                if (input) {
+                    if (key === 'createdBy') {
+                        populateCreatedBySelect(value);
+                    } else if (dataEntries[key] && dataEntries[key].length > 0) {
+                        const select = document.createElement('select');
+                        select.name = key;
+                        select.id = key;
+                        select.required = input.required;
+                        
+                        if (!dataEntries[key].includes(value)) {
+                            const option = document.createElement('option');
+                            option.value = value;
+                            option.textContent = value;
+                            select.appendChild(option);
+                        }
+                        
+                        dataEntries[key].forEach(entry => {
+                            const option = document.createElement('option');
+                            option.value = entry;
+                            option.textContent = entry;
+                            if (entry === value) {
+                                option.selected = true;
+                            }
+                            select.appendChild(option);
+                        });
+                        
+                        input.parentNode.replaceChild(select, input);
+                    } else {
+                        input.value = value;
+                    }
+                }
+            }
+            document.getElementById('qrcodeType').value = label.qrcodeType || 'custom';
+            toggleQRCodeInput();
+        }
+
+        function populateCreatedBySelect(currentValue) {
+            const select = document.getElementById('createdBy');
+            select.innerHTML = '';
+            
+            if (dataEntries.creatoda && dataEntries.creatoda.length > 0) {
+                dataEntries.creatoda.forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    if (name === currentValue) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+            } else {
+                const option = document.createElement('option');
+                option.value = currentValue;
+                option.textContent = currentValue;
+                option.selected = true;
+                select.appendChild(option);
+            }
+        }
+
+        function toggleQRCodeInput() {
+            const qrcodeType = document.getElementById('qrcodeType').value;
+            const qrcodeCustomGroup = document.getElementById('qrcodeCustomGroup');
+            qrcodeCustomGroup.style.display = qrcodeType === 'custom' ? 'block' : 'none';
+        }
+
+        function saveLabel() {
+            const form = document.getElementById('editLabelForm');
+            const labelData = {
+                name: form.name.value,
+                ingredients: form.ingredients.value,
+                allergens: form.allergens.value,
+                storagemethod: form.storagemethod.value,
+                expirydate: form.expirydate.value,
+                priority: form.priority.value,
+                qrcodeType: form.qrcodeType.value,
+                qrcode: form.qrcode.value,
+                createdBy: form.createdBy.value,
+                imageUrl: form.imageUrl.value
+            };
+
+            if (editingLabelId) {
+                const index = labels.findIndex(l => l.id === editingLabelId);
+                if (index !== -1) {
+                    labels[index] = { ...labels[index], ...labelData };
+                }
+            } else {
+                createLabel(labelData);
+            }
+
+            closeEditModal();
+            renderLabels(document.getElementById('searchInput').value, getCurrentPriorityFilter());
+        }
+
+        function createLabel(labelData) {
+            if (labels.length >= 20) {
+                document.getElementById('upgradeBanner').style.display = 'flex';
+                return;
+            }
+
+            const label = {
+                id: Date.now().toString(),
+                ...labelData,
+                expanded: false
+            };
+
+            labels.push(label);
+            updateLabelCounter();
+            renderLabels();
+        }
+
+        function closeEditModal() {
+            document.getElementById('editLabelModal').style.display = 'none';
+            editingLabelId = null;
+        }
+
+        function duplicateLabel(id) {
+            const label = labels.find(l => l.id === id);
+            if (label) {
+                const newLabel = {
+                    ...label,
+                    id: Date.now().toString(),
+                    name: `${label.name} (Copia)`,
+                    expanded: false
+                };
+                createLabel(newLabel);
+            }
+        }
+
+        function deleteLabel(id) {
+            labels = labels.filter(label => label.id !== id);
+            updateLabelCounter();
+            renderLabels(document.getElementById('searchInput').value, getCurrentPriorityFilter());
+            document.getElementById('upgradeBanner').style.display = 'none';
+        }
+
+        function generatePreview(id) {
+            const label = labels.find(l => l.id === id);
+            if (!label) return;
+
+            const previewData = {
+                id: Date.now().toString(),
+                labels: [{ ...label, generatedAt: new Date().toISOString() }],
+                generatedAt: new Date().toISOString()
+            };
+
+            generatedPreviews.push(previewData);
+            renderPreviewSlider();
+            updateLabelCounter();
+        }
+
+        function processBulkData() {
+            const bulkData = document.getElementById('bulkDataEntry').value;
+            const lines = bulkData.split('\n');
+            const newLabel = {};
+
+            lines.forEach(line => {
+                const [field, value] = line.split(':').map(item => item.trim());
+                if (field && value) {
+                    newLabel[field.toLowerCase()] = value;
+                    if (!dataEntries[field.toLowerCase()]) {
+                        dataEntries[field.toLowerCase()] = [];
+                    }
+                    if (!dataEntries[field.toLowerCase()].includes(value)) {
+                        dataEntries[field.toLowerCase()].push(value);
+                    }
+                }
+            });
+
+            if (Object.keys(newLabel).length > 0) {
+                const label = {
+                    id: Date.now().toString(),
+                    name: newLabel.nome || '',
+                    ingredients: newLabel.ingredienti || '',
+                    allergens: newLabel.allergeni || '',
+                    storagemethod: newLabel.metodoconservazione || '',
+                    expirydate: newLabel.datascadenza || '',
+                    priority: newLabel.priorita || 'medium',
+                    qrcode: newLabel.codiceqr || '',
+                    qrcodeType: 'custom',
+                    createdBy: newLabel.creatoda || '',
+                    imageUrl: newLabel.urlimmagine || '',
+                    expanded: false
+                };
+
+                createLabel(label);
+                document.getElementById('bulkDataEntry').value = '';
+            }
+
+            closeEditModal();
+        }
+
+        function updateLabelCounter() {
+            const counter = document.getElementById('labelCounter');
+            counter.textContent = `📟 ${labels.length}/20`;
+        }
+
+        function renderPreviewSlider(searchTerm = '') {
+            const slider = document.getElementById('previewSlider');
+            slider.innerHTML = '';
+
+            const filteredPreviews = generatedPreviews.filter(preview => 
+                preview.labels.some(label => 
+                    label.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    label.ingredients.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+            );
+
+            filteredPreviews.forEach(preview => {
+                const slide = document.createElement('div');
+                slide.className = 'preview-slide';
+                slide.innerHTML = `
+                    <div class="print-preview" onclick="showFullPreview('${preview.id}')">
+                        <img src="${preview.labels[0].imageUrl || '/placeholder.svg?height=150&width=300'}" alt="${preview.labels[0].name}" class="preview-image">
+                        <h3 class="preview-title">${preview.labels[0].name}</h3>
+                        <p>Etichette: ${preview.labels.length}</p>
+                        <p class="preview-date">Generato: ${new Date(preview.generatedAt).toLocaleString()}</p>
+                    </div>
+                    <div class="preview-actions">
+                        <button class="preview-action" onclick="event.stopPropagation(); deletePreview('${preview.id}')">🗑️</button>
+                    </div>
+                `;
+                slider.appendChild(slide);
+            });
+        }
+
+        function showFullPreview(previewId) {
+            const preview = generatedPreviews.find(p => p.id === previewId);
+            if (preview) {
+                const modal = document.getElementById('printPreviewModal');
+                const content = document.getElementById('printPreviewContent');
+                content.innerHTML = '';
+
+                preview.labels.forEach(label => {
+                    const previewDiv = document.createElement('div');
+                    previewDiv.className = 'print-preview';
+                    
+                    previewDiv.innerHTML = `
+                        <h3>${label.name}</h3>
+                        <p><strong>Ingredienti:</strong> ${label.ingredients}</p>
+                        <p><strong>Allergeni:</strong> ${label.allergens}</p>
+                        <p><strong>Metodo di conservazione:</strong> ${label.storagemethod}</p>
+                        <p><strong>Data di scadenza:</strong> ${new Date(label.expirydate).toLocaleDateString()}</p>
+                        <p><strong>Priorità:</strong> ${label.priority}</p>
+                        <p><strong>Creato da:</strong> ${label.createdBy}</p>
+                        <div id="qrcode-${label.id}"></div>
+                    `;
+                    
+                    content.appendChild(previewDiv);
+
+                    // Generate QR code
+                    const qrData = label.qrcodeType === 'anti-sanction' ? 
+                        JSON.stringify({
+                            name: label.name,
+                            ingredients: label.ingredients,
+                            allergens: label.allergens,
+                            storagemethod: label.storagemethod,
+                            expirydate: label.expirydate,
+                            createdBy: label.createdBy
+                        }) : 
+                        label.qrcode;
+
+                    new QRCode(document.getElementById(`qrcode-${label.id}`), {
+                        text: qrData,
+                        width: 128,
+                        height: 128
+                    });
+                });
+
+                modal.style.display = 'block';
+            }
+        }
+
+        function deletePreview(previewId) {
+            generatedPreviews = generatedPreviews.filter(preview => preview.id !== previewId);
+            renderPreviewSlider(document.getElementById('searchInput').value);
+        }
+
+        function downloadLabels() {
+            const content = document.getElementById('printPreviewContent');
+            const labelsHtml = content.innerHTML;
+            const blob = new Blob([`
+                <html>
+                    <head>
+                        <title>SealyDoc Labels</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; }
+                            .print-preview { page-break-after: always; }
+                        </style>
+                        <meta charset="UTF-8">
+                    </head>
+                    <body>${labelsHtml}</body>
+                </html>
+            `], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'sealydoc_labels.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function createNewLabel() {
+            editingLabelId = null;
+            const newLabel = {
+                name: '',
+                ingredients: '',
+                allergens: '',
+                storagemethod: '',
+                expirydate: '',
+                priority: 'medium',
+                qrcode: '',
+                qrcodeType: 'custom',
+                createdBy: '',
+                imageUrl: ''
+            };
+            populateEditForm(newLabel);
+            document.getElementById('editLabelModal').style.display = 'block';
+            showEditTab('edit');
+        }
+
+        function togglePriorityMenu() {
+            const menu = document.getElementById('priorityMenu');
+            menu.classList.toggle('show');
+        }
+
+        function setPriority(priority) {
+            togglePriorityMenu();
+            renderLabels(document.getElementById('searchInput').value, priority);
+        }
+
+        function getCurrentPriorityFilter() {
+            const activeFilterButton = document.querySelector('.priority-menu button.active');
+            return activeFilterButton ? activeFilterButton.dataset.priority : 'all';
+        }
+
+        function showTab(tabName) {
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => tab.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            document.querySelector(`.tab[onclick="showTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        function showEditTab(tabName) {
+            const tabs = document.querySelectorAll('#editLabelModal .tab');
+            const tabContents = document.querySelectorAll('#editLabelModal .tab-content');
+
+            tabs.forEach(tab => tab.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            document.querySelector(`#editLabelModal .tab[onclick="showEditTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+
+        function closePrintPreview() {
+            document.getElementById('printPreviewModal').style.display = 'none';
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            renderLabels(e.target.value, getCurrentPriorityFilter());
+        });
+
+        // Initial render
+        renderLabels();
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target.className === 'modal') {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
